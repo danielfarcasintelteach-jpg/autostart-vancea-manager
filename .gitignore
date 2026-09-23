@@ -1,0 +1,25 @@
+# Programe instalate local
+/programe/
+
+# Dependente si fisiere generate de Next.js, Node.js si TypeScript
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+.vercel/
+
+# Configuratii locale si secrete
+.env
+.env.*
+.env
+.env.*
+
+# Instalatoare, jurnale si fisiere temporare
+*.exe
+*.msi
+*.log
+*.tmp
+# Backup temporar al repository-ului creat de Codex
+/.git_codex_backup/
