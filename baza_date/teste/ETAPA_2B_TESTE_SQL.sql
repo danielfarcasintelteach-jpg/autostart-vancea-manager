@@ -1,5 +1,5 @@
--- AUTOSTART VANCEA Manager - teste SQL propuse, NU au fost executate.
--- Rulati DUPA aplicarea migratiei, intr-o baza de dezvoltare/de test.
+-- AUTOSTART VANCEA Manager - Etapa 2B, teste SQL executate cu succes (10/10).
+-- Script reproductibil dupa aplicarea migratiei, intr-o baza de dezvoltare/de test.
 -- Cerinta: cel putin un rand in public.utilizatori legat de un cont Auth
 -- creat prin administrarea Auth (NU inserati manual in auth.users).
 -- Editorul SQL trebuie sa foloseasca un rol administrativ ce vede toate randurile.
@@ -179,10 +179,10 @@ BEGIN
 END;
 $teste$;
 
--- TESTE SUPLIMENTARE CU DOUA SESIUNI, dupa aplicare (nu pot fi dovedite de DO):
+-- TESTE SUPLIMENTARE CU DOUA SESIUNI, efectuate separat (nu pot fi dovedite de DO):
 -- A si B: INSERT programari suprapuse pentru acelasi cursant, dar inscrieri
 -- diferite; A tine tranzactia deschisa, B asteapta lockul pe cursanti; dupa
 -- COMMIT A, B primeste 23P01. Repetati cu acelasi instructor/vehicul si cu
 -- INSERT inscrieri active concurente. Rulati pe date fictive izolate.
--- Testati apoi rolurile anon/authenticated, RLS si citirea coloanei cnp separat.
+-- Au fost verificate separat rolurile anon/authenticated, RLS si citirea coloanei cnp.
 ROLLBACK;

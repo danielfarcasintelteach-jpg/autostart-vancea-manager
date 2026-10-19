@@ -1,9 +1,9 @@
 # AUTOSTART VANCEA Manager — dosar tehnic central
 
-**Versiune:** 1.1 — schema PostgreSQL definită pentru revizuire  
-**Data:** 23.09.2026  
+**Versiune:** 1.2 — starea aplicării și testării Etapei 2B
+**Data inițială:** 23.09.2026; **actualizat:** 19.10.2026
 **Domeniu:** administrarea unei școli de șoferi, exclusiv categoria B  
-**Stadiu:** etapa 1 (Git și Next.js) finalizată conform verificărilor beneficiarului; etapa 2 este pregătită la nivel de proiectare. Acest dosar nu este o migrație SQL executabilă.
+**Stadiu:** Etapa 2B încheiată: migrarea inițială a fost aplicată și testată în Supabase de dezvoltare; rezultatele sunt consemnate în `ETAPA_2B_RAPORT_APLICARE_SI_TESTARE.md`. RLS este activ pe cele nouă tabele, fără politici operaționale; acestea urmează în Etapa 3. Acest dosar rămâne document de proiectare, nu script SQL executabil.
 
 ## 1. Scop, limite și vocabular
 
@@ -83,13 +83,13 @@ flowchart TB
 
 Exemplu: secretariatul trimite o programare → Zod verifică data și începutul → serverul verifică identitatea și rolul → PostgreSQL calculează sfârșitul și verifică înscrierea/resursele → două constrângeri de excludere protejează instructorul și vehiculul, iar o verificare tranzacțională protejează cursantul → RLS/granturile limitează accesul → interfața afișează confirmare sau conflict. Niciun pas din browser nu înlocuiește controlul de la server sau din baza de date.
 
-## 6. Schema relațională propusă
+## 6. Schema relațională aplicată în mediul de dezvoltare
 
 Schema cuprinde **exact cele nouă tabele proprii aprobate**; `auth.users` aparține Supabase Auth. Toate cheile primare, cu excepția `utilizatori.id_utilizator`, sunt `uuid NOT NULL DEFAULT gen_random_uuid()`. Fiecare tabelă are `data_crearii timestamptz NOT NULL DEFAULT now()` și `data_modificarii timestamptz NOT NULL DEFAULT now()`, actualizată la modificare. Timpurile se stochează ca `timestamptz` și se afișează în `Europe/Bucharest`. Aceste două date de audit nu constituie un jurnal complet al tuturor modificărilor.
 
-Tabelul următor este **contractul de proiectare pentru migrație**, nu SQL executat. `NN` înseamnă `NOT NULL`; câmpurile marcate `NULL` sunt opționale. Coloanele de audit comune se subînțeleg în fiecare rând.
+Tabelul următor descrie **contractul schemei aplicate** prin `baza_date/migrari/001_schema_initiala.sql`. `NN` înseamnă `NOT NULL`; câmpurile marcate `NULL` sunt opționale. Coloanele de audit comune se subînțeleg în fiecare rând.
 
-| Tabelă | Chei și date de bază propuse | Legături / constrângeri esențiale |
+| Tabelă | Chei și date de bază | Legături / constrângeri esențiale |
 | --- | --- | --- |
 | `persoane` | `id_persoana` PK; `nume varchar(100) NN`, `prenume varchar(100) NN`, `telefon varchar(30) NULL`, `email varchar(254) NULL`, `data_nasterii date NULL`, `adresa text NULL` | `CHECK (btrim(nume) <> '' AND btrim(prenume) <> '')`. Numele și emailul de contact nu sunt chei unice; emailul de login rămâne în Auth. |
 | `utilizatori` | `id_utilizator uuid PK NN`, `id_persoana uuid NN UNIQUE`, `rol varchar(20) NN`, `activ boolean NN DEFAULT true` | `id_utilizator` FK la `auth.users(id)`; `id_persoana` FK la `persoane`. `CHECK (rol IN ('administrator','secretariat','instructor','cursant'))`; rolul nu poate fi modificat direct de titular. Fără coloană de parolă. |
@@ -194,9 +194,9 @@ Am comparat clarificările definitive cu dosarul 1.0 și cu schița anterioară 
 
 ### 9.1. RLS și granturi pentru cele nouă tabele
 
-RLS se activează **pe toate cele nouă tabele din schema expusă** înainte de date reale. `anon` nu primește acces la datele lor; `authenticated` primește doar drepturile strict necesare. O politică de rând nu înlocuiește `GRANT`/`REVOKE`, iar RLS nu ascunde singură o coloană precum CNP. Pentru fiecare operație se testează atât cazuri permise, cât și respinse. [S2] [S5]
+RLS este activ **pe toate cele nouă tabele din schema expusă**. În starea de la închiderea Etapei 2B există intenționat **zero politici RLS operaționale**: pentru `anon` și `authenticated`, `SELECT/INSERT/UPDATE/DELETE = false` pe fiecare tabelă, iar `cursanti.cnp` nu poate fi citit de aceste roluri. Matricea de mai jos este ținta pentru Etapa 3, nu descrierea accesului deja acordat. O politică de rând nu înlocuiește `GRANT`/`REVOKE`, iar RLS nu ascunde singură o coloană precum CNP. [S2] [S5]
 
-| Tabelă | Citire permisă prin RLS | Scriere permisă prin server/operație SQL protejată |
+| Tabelă | Citire planificată prin RLS | Scriere planificată prin server/operație SQL protejată |
 | --- | --- | --- |
 | `persoane` | Administrator/secretariat: toate; instructor: doar persoane ale cursanților repartizați sau din propriile ședințe, cu câmpuri strict necesare; cursant: propriul profil și informația minimă despre instructorul repartizat. | Administrator/secretariat; modificările de contact nu schimbă automat identitatea de login din Auth. |
 | `utilizatori` | Administrator: toate; ceilalți: numai propriul cont și câmpuri neconfidențiale. | Numai administratorul, prin funcție verificată; niciun utilizator nu își poate schimba singur rolul sau `activ`. |
@@ -208,7 +208,7 @@ RLS se activează **pe toate cele nouă tabele din schema expusă** înainte de 
 | `plati` | Administrator/secretariat: toate; cursant: ale înscrierilor sale; instructor: niciuna. | Administrator/secretariat înscriu plăți; numai administratorul autorizează rambursări în V1. |
 | `examene` | Administrator/secretariat: toate; instructor: examenele cursanților repartizați; cursant: propriile încercări. | Administrator/secretariat. |
 
-Pentru CNP se revocă `SELECT` la nivel de tabelă pentru `authenticated` și se acordă citire numai coloanelor nesensibile necesare; nu se acordă apoi un `SELECT` general care ar anula restricția. CNP se obține printr-o funcție cu identitate și rol verificate; funcția nu este executabilă de `anon`. Procedură similară protejează schimbarea rolului. O funcție internă de rol evită recursia politicilor pe `utilizatori`; accesul elevat are `search_path` fix, denumiri calificate și drepturi `EXECUTE` restrânse. Politicile RLS se aplică și la citiri directe prin API, iar mutațiile interzise direct sunt refuzate prin granturi/RLS; funcțiile autorizate revalidează rolul și relația cu rândul. [S2] [S5]
+Pentru CNP, `SELECT` la nivel de tabelă pentru `authenticated` este deja revocat. În Etapa 3 se va acorda citire numai coloanelor nesensibile necesare, fără un `SELECT` general care ar anula restricția. Citirea/corectarea CNP și schimbarea rolului cer operații înguste cu identitate și rol verificate; `anon` nu va primi astfel de funcții. O funcție internă de rol va evita recursia politicilor pe `utilizatori`; accesul elevat va avea `search_path` fix, denumiri calificate și drepturi `EXECUTE` restrânse. Politicile RLS viitoare se vor aplica și la citiri directe prin API, iar mutațiile interzise direct vor fi refuzate prin granturi/RLS; funcțiile autorizate vor revalida rolul și relația cu rândul. [S2] [S5]
 
 ### 9.2. Identitate, secrete și date fictive
 
@@ -218,38 +218,31 @@ Pentru CNP se revocă `SELECT` la nivel de tabelă pentru `authenticated` și se
 4. Pentru rapoarte, o eventuală vedere SQL trebuie să respecte RLS (`security_invoker`) sau să fie privată; o vedere privilegiată configurată implicit poate expune rânduri. [S6]
 5. Pentru folosirea datelor reale se stabilesc separat accesul, retenția, anonimizarea/ștergerea excepțională și copiile de siguranță. Schimbarea stării în `inactiv` nu stabilește automat aceste proceduri.
 
-## 10. Structura și planul de conectare Next.js–Supabase
+## 10. Structura Next.js–Supabase și starea bazei
 
-Conform verificării beneficiarului, Git și aplicația Next.js din `cod` există deja și `main` este sincronizat cu `origin/main`. Arborele de mai jos arată **subfolderele planificate**, nu pretinde că toate există acum pe calculator. Mai întâi se citește structura reală; dacă aplicația nu folosește `src`, căile noi se adaptează.
+Aplicația Next.js și clienții Supabase se află în `cod`, fără director `src`. Arborele de mai jos indică fișierele relevante existente după Etapa 2B.
 
 ```text
 D:\Proiecte\AUTOSTART-VANCEA\
-├── .gitignore                  # existent; se verifică excluderea secretelor și programe
-├── README.md                   # pornire și orientare
+├── .gitignore
 ├── baza_date\
-│   ├── migrari\               # migrații versionate: schemă, reguli și RLS
-│   └── date_demonstrative\     # generator/date fictive fără CNP-uri reale
+│   ├── migrari\001_schema_initiala.sql
+│   ├── teste\ETAPA_2B_TESTE_SQL.sql
+│   └── rollback\001_schema_initiala_ROLLBACK_NEEXECUTAT.sql
 ├── cod\
-│   ├── src\app\               # aplicație Next.js existentă; calea se verifică
-│   ├── src\lib\supabase\      # clienți browser/server potriviți structurii reale
-│   ├── proxy.ts                # convenție Next.js 16 pentru sesiune, poziție de verificat
-│   ├── .env.example            # numai numele variabilelor și exemple neconfidențiale
-│   └── .env.local              # local, exclus din Git; valori reale numai aici
+│   ├── app\                    # aplicație Next.js
+│   ├── lib\supabase\           # clienți browser/server și configurare
+│   ├── proxy.ts                # sesiune Next.js 16
+│   └── .env.example            # numai numele variabilelor și exemple neconfidențiale
 ├── documentatie\
-│   └── DOSAR_TEHNIC_AUTOSTART_VANCEA_Manager.md
-├── programe\                   # existent; exclus integral din Git
-└── teste\                      # scenarii, rezultate, eventual teste automate
+│   ├── DOSAR_TEHNIC_AUTOSTART_VANCEA_Manager.md
+│   └── ETAPA_2B_RAPORT_APLICARE_SI_TESTARE.md
+└── programe\                   # exclus integral din Git
 ```
 
-**Planul etapei 2, fără execuție în acest dosar:**
+Migrarea inițială a fost aplicată în Supabase de dezvoltare, iar cele 10 teste SQL funcționale și verificările de concurență au trecut, conform raportului Etapei 2B. Profilul `admin.demo@example.com` rămâne pentru Etapa 3. Rollback-ul este distructiv și neexecutat. Nu s-au creat politici RLS operaționale: accesul aplicației la tabele este încă blocat pentru `anon` și `authenticated`.
 
-1. Inspectăm local `cod/package.json`, arborele real și `.gitignore`; nu rulăm din nou `create-next-app`. Pregătim un proiect Supabase **de dezvoltare**, separat de un eventual mediu cu date reale.
-2. În proiectul Supabase se obțin URL-ul și cheia *publishable*; ele se introduc local în `cod/.env.local` ca `NEXT_PUBLIC_SUPABASE_URL` și `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Exemplul `.env.example` conține numai numele variabilelor, fără valori reale. `.gitignore` exclude `/programe/`, `.env.local`, `node_modules` și `.next`, dar permite explicit urmărirea lui `.env.example`. Cheia secretă nu este necesară pentru conectarea obișnuită. [S3]
-3. După explicarea comenzilor se instalează doar `@supabase/supabase-js` și `@supabase/ssr` în `cod`. Zod și shadcn/ui se adaugă când începe modulul care le folosește; nu se reinstalează Next.js/Node/Git.
-4. Se pregătesc clienții separați browser/server. În Next.js 16 se folosește convenția `proxy.ts` pentru reîmprospătarea sesiunii cu cookie, conform documentației actuale; protejarea datelor cere verificarea identității pe server, apoi a rolului din `utilizatori`. Căile exacte depind de folosirea `src/` în proiectul deja creat. [S1]
-5. În etapa 2 se verifică pornirea/buildul și configurația fără a publica secrete ori a crea tabele de producție. O probă de citire reală din PostgreSQL se face **după prima migrație din etapa 3** și RLS/granturile aferente; simpla construire a clientului Supabase nu dovedește accesul la baza de date.
-
-Pentru etapa 3, schema, politicile și funcțiile sunt păstrate în fișiere SQL versionate înaintea aplicării lor. Nu presupunem că Supabase CLI ori Docker sunt deja instalate; alegerea dintre aplicarea controlată prin SQL Editor și un flux de migrații CLI se face explicit înainte de prima execuție.
+În Etapa 3 se implementează politicile RLS și granturile operaționale în fișiere SQL versionate și se testează cu rolurile reale înainte de CRUD. Cheile și valorile de mediu rămân numai local; `.env.example` nu conține secrete. [S2] [S3]
 
 ## 11. Plan etapizat și criteriul de trecere
 
@@ -258,8 +251,9 @@ O etapă este gata când rezultatul ei rulează, testul asociat trece și schimb
 | Etapa | Livrabil mic și verificare înainte de continuare |
 | --- | --- |
 | 1. Inițializare și Git | **Finalizată conform beneficiarului:** Git pe `main`, `origin/main` sincronizat, Next.js 16.3.6, React 19.2.8, TypeScript 5.9.3 și server local verificate. |
-| 2. Conexiune Supabase | Urmează: proiect de dezvoltare, cheie publicabilă, clienți browser/server și `proxy.ts` pentru Next.js 16; fără secrete în Git. Verificare configurație și build; proba SQL după prima migrație. |
-| 3. Schema PostgreSQL | Cele nouă tabele, cheile, `CHECK`, indexuri și migrații reproductibile; RLS/granturi restrictive inițiale; teste de chei și înscriere activă. |
+| 2A. Conexiune Supabase | Pregătite în repository: `.env.example`, clienții browser/server și `proxy.ts` pentru Next.js 16; secretele rămân în afara Git. |
+| 2B. Schema și verificările SQL | **Aplicată și testată în Supabase de dezvoltare:** 9 tabele, 8 funcții, 16 trigger-e, 2 `EXCLUDE`, 14 FK `RESTRICT`, RLS activ pe toate tabelele; 10/10 teste SQL și verificările de concurență trecute. Politici RLS operaționale: 0. |
+| 3. Autorizare operațională | Politici RLS și granturi pentru fluxurile permise; verificare cu `anon`/`authenticated` și accesul la CNP înainte de CRUD. |
 | 4. Autentificare | Login/logout, sesiune SSR, conturi demonstrative cu patru roluri și verificare server; politici RLS minimale testate înainte de orice CRUD personal. |
 | 5. Cursanți | Listă, căutare, creare, corectare și inactivare cu validări; test de acces pentru secretariat/instructor/cursant. |
 | 6. Instructori | CRUD logic, stare activ/inactiv, cont opțional; un instructor nu vede datele altuia. |
@@ -319,11 +313,11 @@ Proiectul este complet când:
 7. Testele relevante trec, erorile cunoscute și limitele sunt consemnate, buildul rulează, iar Git nu conține programe instalate, secrete sau date personale reale.
 8. Instanța publicată, dacă este aprobată la etapa 18, reproduce versiunea testată și are instrucțiuni de configurare; documentația academică arată arhitectura, schema, SQL, algoritmii, testele și rezultatele reale.
 
-## 14. Următoarea sarcină concretă pentru Codex local
+## 14. Următoarea etapă
 
-**Etapa 2A — numai conexiunea Next.js–Supabase.** Codex inspectează întâi structura reală și `.gitignore`, explică fiecare comandă, apoi adaugă numai `@supabase/supabase-js` și `@supabase/ssr` în aplicația existentă. Pregătește `.env.example` fără valori și clienții browser/server potrivit structurii constatate; introduce `proxy.ts` conform Next.js 16 când pregătește sesiunea. Dacă încă nu există un proiect Supabase de dezvoltare, ghidează beneficiarul să îl creeze și să introducă **local** URL-ul și cheia publicabilă în `.env.local`, fără a cere sau afișa secrete. Verifică `.gitignore`, buildul și `git status`, apoi raportează clar ce este configurat și ce verificare a bazei de date așteaptă migrația din etapa 3. Se oprește înainte de tabele, politici RLS, interfața de login, commit sau push. Nu modifică programele instalate și nu inițializează din nou Next.js.
+**Etapa 3 — acces operațional controlat.** Schema inițială și regulile de integritate sunt deja aplicate și testate în Supabase de dezvoltare. Se proiectează politicile RLS și granturile minime pentru rolurile aplicației, inclusiv protecția la nivel de coloană pentru CNP, apoi se verifică operațiile permise și respinse prin rolurile reale. Profilul demonstrativ `admin.demo@example.com` poate fi folosit în această etapă. Accesul CRUD din aplicație începe numai după aceste verificări.
 
-**Poarta de trecere la etapa 3:** aplicația existentă construiește, valorile reale sunt doar în mediul local, `programe` și `.env.local` rămân în afara Git, iar planul migrațiilor și al rolurilor din §§6 și 9 este acceptat. Accesul efectiv la PostgreSQL se probează după prima migrație sigură, nu prin simpla instanțiere a clientului.
+**Starea de plecare:** RLS este activ pe 9/9 tabele, dar nu există încă politici RLS operaționale; `anon` și `authenticated` au `SELECT/INSERT/UPDATE/DELETE = false` pe toate cele nouă tabele și nu pot citi `cursanti.cnp`. Rollback-ul rămâne neexecutat și distructiv.
 
 ## 15. Surse tehnice pentru verificare la implementare
 

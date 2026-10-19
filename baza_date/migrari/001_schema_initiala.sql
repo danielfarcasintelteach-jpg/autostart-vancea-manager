@@ -1,5 +1,5 @@
--- AUTOSTART VANCEA Manager - Etapa 2B, propunere pentru dosarul tehnic 1.1.
--- NU a fost executat. Se aplica o singura data, pe o baza fara aceste noua tabele.
+-- AUTOSTART VANCEA Manager - Etapa 2B, migrare initiala aplicata in Supabase de dezvoltare.
+-- Se aplica o singura data, pe o baza fara aceste noua tabele.
 -- Cerinte: PostgreSQL Supabase, rol cu drept de CREATE, schema auth.users existenta.
 -- Testele de concurenta si RLS sunt obligatorii inainte de utilizarea aplicatiei.
 
