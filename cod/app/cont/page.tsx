@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { creeazaClientServer } from "@/lib/supabase/server";
+import { obtineProfilCurent } from "@/lib/acces/profil-curent";
 
 import { deconecteaza } from "./actiuni";
 
@@ -14,11 +14,14 @@ export default async function PaginaCont({
 }: {
   searchParams: Promise<{ deconectare?: string }>;
 }) {
-  const supabase = await creeazaClientServer();
-  const verificare = await supabase.auth.getClaims().catch(() => null);
+  const profil = await obtineProfilCurent();
 
-  if (!verificare?.data?.claims?.sub || verificare.error) {
+  if (profil.stare === "neautentificat") {
     redirect("/autentificare");
+  }
+
+  if (profil.stare === "neactivat") {
+    redirect("/acces-neactivat");
   }
 
   const { deconectare } = await searchParams;
@@ -30,9 +33,16 @@ export default async function PaginaCont({
           AUTOSTART VANCEA Manager
         </p>
         <h1 className="mb-3 text-2xl font-semibold">Cont</h1>
-        <p className="mb-6 text-sm text-zinc-600">
-          Sesiunea ta Supabase Auth este verificată. Funcțiile contului vor fi adăugate în etapele următoare.
-        </p>
+        {profil.stare === "activ" ? (
+          <div className="mb-6 space-y-2 text-sm text-zinc-600">
+            <p>Rol: <span className="font-medium text-zinc-950">{profil.rol}</span></p>
+            <p>Cont activ</p>
+          </div>
+        ) : (
+          <p className="mb-6 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+            Accesul la cont nu este disponibil momentan. Încearcă din nou mai târziu.
+          </p>
+        )}
 
         {deconectare === "eroare" && (
           <p className="mb-5 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">

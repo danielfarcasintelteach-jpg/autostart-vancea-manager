@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { creeazaClientServer } from "@/lib/supabase/server";
 
-export async function deconecteaza() {
+async function executaDeconectarea(caleEroare: string) {
   const supabase = await creeazaClientServer();
   const verificare = await supabase.auth.getClaims().catch(() => null);
 
@@ -21,5 +21,13 @@ export async function deconecteaza() {
     // Pagina afișează un mesaj neutru dacă sesiunea nu a fost închisă.
   }
 
-  redirect(reusit ? "/autentificare" : "/cont?deconectare=eroare");
+  redirect(reusit ? "/autentificare" : caleEroare);
+}
+
+export async function deconecteaza() {
+  await executaDeconectarea("/cont?deconectare=eroare");
+}
+
+export async function deconecteazaDinAccesNeactivat() {
+  await executaDeconectarea("/acces-neactivat?deconectare=eroare");
 }
