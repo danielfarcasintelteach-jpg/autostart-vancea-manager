@@ -141,12 +141,21 @@ export default async function PaginaCursanti({
             </p>
           </div>
 
-          <Link
-            className="inline-flex w-fit rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100"
-            href={calePanou}
-          >
-            Înapoi la panou
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              className="inline-flex w-fit rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+              href="/cont/cursanti/nou"
+            >
+              Adaugă cursant
+            </Link>
+
+            <Link
+              className="inline-flex w-fit rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100"
+              href={calePanou}
+            >
+              Înapoi la panou
+            </Link>
+          </div>
         </div>
 
         <div className="mb-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
