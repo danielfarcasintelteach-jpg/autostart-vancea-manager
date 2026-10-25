@@ -1,26 +1,29 @@
 import { redirect } from "next/navigation";
 
-import { obtineProfilCurent } from "@/lib/acces/profil-curent";
+import { verificaRoluriServer } from "@/lib/acces/autorizare";
 import { caleContPentruRol, type RolAplicatie } from "@/lib/acces/roluri";
 
 export async function cereRoluri(...roluriPermise: RolAplicatie[]) {
-  const profil = await obtineProfilCurent();
+  const acces = await verificaRoluriServer(...roluriPermise);
 
-  if (profil.stare === "neautentificat") {
+  if (acces.autorizat) {
+    return {
+      stare: "activ" as const,
+      rol: acces.rol,
+    };
+  }
+
+  if (acces.motiv === "neautentificat") {
     redirect("/autentificare");
   }
 
-  if (profil.stare === "neactivat") {
+  if (acces.motiv === "neactivat") {
     redirect("/acces-neactivat");
   }
 
-  if (profil.stare === "eroare") {
-    redirect("/cont");
+  if (acces.motiv === "interzis") {
+    redirect(caleContPentruRol(acces.rol));
   }
 
-  if (!roluriPermise.includes(profil.rol)) {
-    redirect(caleContPentruRol(profil.rol));
-  }
-
-  return profil;
+  redirect("/cont");
 }

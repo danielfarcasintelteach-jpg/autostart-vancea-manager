@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 
 import { PanouRol } from "@/app/cont/_componente/panou-rol";
 import { cereRoluri } from "@/lib/acces/protectie-ruta";
+import { citesteRezumatAcces } from "@/lib/date/rezumat-acces";
 
 export const metadata: Metadata = {
   title: "Instructor | AUTOSTART VANCEA Manager",
 };
 
 export default async function PaginaInstructor() {
-  await cereRoluri("instructor");
+  const profil = await cereRoluri("instructor");
+  const dateVizibile = await citesteRezumatAcces(profil.rol);
 
   return (
     <PanouRol
@@ -20,6 +22,7 @@ export default async function PaginaInstructor() {
         "Programările mele",
         "Examenele cursanților repartizați",
       ]}
+      dateVizibile={dateVizibile}
     />
   );
 }

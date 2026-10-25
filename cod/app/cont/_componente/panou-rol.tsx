@@ -1,14 +1,22 @@
 import { deconecteaza } from "@/app/cont/actiuni";
 import { etichetaRol, type RolAplicatie } from "@/lib/acces/roluri";
+import type { ElementRezumatAcces } from "@/lib/date/rezumat-acces";
 
 type PanouRolProps = {
   rol: RolAplicatie;
   titlu: string;
   descriere: string;
   sectiuni: readonly string[];
+  dateVizibile: readonly ElementRezumatAcces[];
 };
 
-export function PanouRol({ rol, titlu, descriere, sectiuni }: PanouRolProps) {
+export function PanouRol({
+  rol,
+  titlu,
+  descriere,
+  sectiuni,
+  dateVizibile,
+}: PanouRolProps) {
   return (
     <main className="flex flex-1 justify-center bg-zinc-50 px-4 py-8 text-zinc-950 sm:px-6 sm:py-12">
       <section className="w-full max-w-5xl">
@@ -48,10 +56,29 @@ export function PanouRol({ rol, titlu, descriere, sectiuni }: PanouRolProps) {
             ))}
           </div>
 
+          <h2 className="mt-8 text-lg font-semibold">Date vizibile prin regulile de acces</h2>
+          <p className="mt-2 max-w-3xl text-sm text-zinc-600">
+            Numerele sunt calculate pe server cu sesiunea curentă. Politicile RLS filtrează
+            fiecare interogare, iar această verificare nu afișează date personale.
+          </p>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {dateVizibile.map((element) => (
+              <div
+                className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-4"
+                key={element.cheie}
+              >
+                <p className="text-sm text-zinc-600">{element.eticheta}</p>
+                <p className="mt-1 text-2xl font-semibold text-zinc-950">
+                  {element.numar === null ? "Indisponibil" : element.numar}
+                </p>
+              </div>
+            ))}
+          </div>
+
           <p className="mt-6 text-sm text-zinc-500">
-            În Etapa 3.5A verificăm separarea interfeței pe roluri. Funcționalitățile
-            operaționale vor fi conectate etapizat la operațiile server și la politicile
-            deja existente.
+            Etapa 3.5B conectează interfața la citiri server-side filtrate de RLS.
+            Operațiile CRUD complete rămân în etapele funcționale dedicate.
           </p>
         </div>
       </section>
