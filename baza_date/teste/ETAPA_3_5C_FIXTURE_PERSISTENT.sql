@@ -20,7 +20,7 @@ BEGIN
   SELECT a.id INTO v_admin
   FROM auth.users a
   JOIN public.utilizatori u ON u.id_utilizator = a.id
-  WHERE a.email = 'daniel_farcas_l@yahoo.com'
+  WHERE a.email = 'admin.demo@example.com'
     AND u.rol = 'administrator'
     AND u.activ IS TRUE;
 
@@ -37,7 +37,7 @@ BEGIN
   WHERE a.email = 'cursant.a.demo@example.com';
 
   IF v_admin IS NULL THEN
-    RAISE EXCEPTION '3.5C: administratorul real activ nu a fost gasit';
+    RAISE EXCEPTION '3.5C: administratorul demo activ nu a fost gasit';
   END IF;
 
   IF v_secretariat IS NULL OR v_instructor IS NULL OR v_cursant IS NULL THEN
@@ -95,7 +95,7 @@ SELECT pg_catalog.set_config(
     SELECT a.id::text
     FROM auth.users a
     JOIN public.utilizatori u ON u.id_utilizator = a.id
-    WHERE a.email = 'daniel_farcas_l@yahoo.com'
+    WHERE a.email = 'admin.demo@example.com'
       AND u.rol = 'administrator'
       AND u.activ IS TRUE
   ),

@@ -1,9 +1,9 @@
 # AUTOSTART VANCEA Manager — dosar tehnic central
 
-**Versiune:** 1.3 — starea aplicării și testării Etapei 3.5C
+**Versiune:** 1.4 — starea aplicării și auditării Etapei 3.6
 **Data inițială:** 23.09.2026; **actualizat:** 25.10.2026
 **Domeniu:** administrarea unei școli de șoferi, exclusiv categoria B  
-**Stadiu:** Etapa 3.5C încheiată și validată: autentificarea SSR, profilurile și rolurile, rutele protejate pe roluri, citirile server-side și filtrarea prin RLS sunt funcționale. Separarea practică a datelor a fost verificată în interfață pentru `secretariat`, `instructor` și `cursant`, folosind două seturi distincte de date demonstrative. Rezultatele sunt consemnate în `documentatie/ETAPA_3_5C_RAPORT_VALIDARE_RLS_UI.md`. Operațiile CRUD complete rămân în etapele funcționale dedicate. Acest dosar rămâne document de proiectare, nu script SQL executabil.
+**Stadiu:** Etapa 3.6 încheiată și validată. Blocul 3.x este închis din punct de vedere al autentificării SSR, profilurilor și rolurilor, rutelor protejate, citirilor server-side filtrate prin RLS, operațiilor SQL controlate, protecției CNP, auditului și idempotentei. Auditul final este consemnat în `documentatie/ETAPA_3_6_RAPORT_AUDIT_INTEGRARE_SECURITATE.md`. Stiva validată este Next.js 16.4.3 + React 19.2.9. Operațiile CRUD complete și modulele funcționale continuă în etapele următoare.
 
 ## 1. Scop, limite și vocabular
 
@@ -37,7 +37,7 @@ Versiunea 1 este pentru o singură școală și categoria B. Nu include alte cat
 | N01 | Interfață în română, utilizabilă la 360 px (telefon), 768 px (tabletă) și 1280 px (calculator), fără derulare orizontală pentru fluxurile principale. |
 | N02 | Navigare cu tastatura, etichete pentru câmpuri, stare de focus vizibilă, mesaje de eroare asociate câmpurilor și contrast lizibil. |
 | N03 | Validare atât în interfață, cât și pe server; constrângeri SQL pentru integritatea care trebuie să reziste inclusiv accesului concurent. |
-| N04 | Datele personale se afișează doar în limita atribuțiilor; nu se publică secrete, parole, CNP sau date reale în cod, teste și capturi. |
+| N04 | Datele personale se afișează doar în limita atribuțiilor; nu se publică secrete, parole, CNP reale sau alte date personale reale în cod, teste și capturi. |
 | N05 | Istoricul înscrierilor, programărilor, plăților și examenelor rămâne inteligibil după schimbarea stărilor. |
 | N06 | Un set de date demonstrative de ordinul a 1.000 de cursanți permite căutare paginată și pagini principale utilizabile; timpul de răspuns se măsoară în test, fără promisiune de SLA pentru servicii externe. |
 | N07 | Migrații SQL versionate, cod tipizat, convenții românești consecvente și instrucțiuni de rulare reproductibile pe Windows. |
@@ -178,7 +178,7 @@ Am comparat clarificările definitive cu dosarul 1.0 și cu schița anterioară 
 
 | Constatare | Decizie pentru V1 / efect asupra etapelor |
 | --- | --- |
-| Etapa 1 este deja realizată: Next.js 16.3.6, React 19.2.8, TypeScript 5.9.3, Git și `origin/main` funcționează conform beneficiarului. | Nu se mai inițializează Next.js sau Git; etapa următoare este conectarea controlată la Supabase. Conținutul exact al folderului Windows se verifică local înainte de a alege căile fișierelor. |
+| Etapa 1 este deja realizată: Next.js 16.4.3, React 19.2.9, TypeScript 5.9.3, Git și `origin/main` funcționează conform beneficiarului. | Nu se mai inițializează Next.js sau Git; etapa următoare este conectarea controlată la Supabase. Conținutul exact al folderului Windows se verifică local înainte de a alege căile fișierelor. |
 | `programari.id_cursant` din dosarul 1.0 contrazice decizia nouă. | Coloana este eliminată. Două excluderi GiST protejează instructorul și vehiculul; verificarea cursantului este făcută de triggerul tranzacțional descris în §6.3 și testată concurent. |
 | Durata variabilă/`minute_efectuate` și exemplul 120 + 90 din dosarul 1.0 contrazic ședința fixă. | `minute_efectuate` este eliminată; fiecare rând `finalizata` contribuie cu 90 minute calculate. Sfârșitul este calculat în PostgreSQL din început. |
 | CNP era opțional în dosarul 1.0. | `cursanti.cnp` este acum `NOT NULL UNIQUE`, cu format de 13 cifre și date fictive în demo; trebuie protejat și la nivel de coloană, fiindcă RLS controlează rânduri, nu coloane. |
@@ -250,7 +250,7 @@ O etapă este gata când rezultatul ei rulează, testul asociat trece și schimb
 
 | Etapa | Livrabil mic și verificare înainte de continuare |
 | --- | --- |
-| 1. Inițializare și Git | **Finalizată conform beneficiarului:** Git pe `main`, `origin/main` sincronizat, Next.js 16.3.6, React 19.2.8, TypeScript 5.9.3 și server local verificate. |
+| 1. Inițializare și Git | **Finalizată conform beneficiarului:** Git pe `main`, `origin/main` sincronizat, Next.js 16.4.3, React 19.2.9, TypeScript 5.9.3 și server local verificate. |
 | 2A. Conexiune Supabase | Pregătite în repository: `.env.example`, clienții browser/server și `proxy.ts` pentru Next.js 16; secretele rămân în afara Git. |
 | 2B. Schema și verificările SQL | **Aplicată și testată în Supabase de dezvoltare:** 9 tabele, 8 funcții, 16 trigger-e, 2 `EXCLUDE`, 14 FK `RESTRICT`, RLS activ pe toate tabelele; 10/10 teste SQL și verificările de concurență trecute. Politici RLS operaționale: 0. |
 | 3. Autorizare operațională | Politici RLS și granturi pentru fluxurile permise; verificare cu `anon`/`authenticated` și accesul la CNP înainte de CRUD. |
@@ -315,10 +315,9 @@ Proiectul este complet când:
 
 ## 14. Următoarea etapă
 
-**Etapa 3 — acces operațional controlat.** Schema inițială și regulile de integritate sunt deja aplicate și testate în Supabase de dezvoltare. Se proiectează politicile RLS și granturile minime pentru rolurile aplicației, inclusiv protecția la nivel de coloană pentru CNP, apoi se verifică operațiile permise și respinse prin rolurile reale. Profilul demonstrativ `admin.demo@example.com` poate fi folosit în această etapă. Accesul CRUD din aplicație începe numai după aceste verificări.
+**Etapa 4 — consolidarea conturilor și datelor demonstrative.** Blocul 3.x este închis și auditat. Conturile demonstrative folosite în testele de securitate se inventariază și se păstrează exclusiv cu date fictive, apoi se pregătește setul demonstrativ stabil necesar dezvoltării modulelor funcționale. Operațiile și citirile nou introduse trebuie să reutilizeze mecanismele de autorizare, RLS și RPC validate în Etapa 3.6.
 
-**Starea de plecare:** RLS este activ pe 9/9 tabele, dar nu există încă politici RLS operaționale; `anon` și `authenticated` au `SELECT/INSERT/UPDATE/DELETE = false` pe toate cele nouă tabele și nu pot citi `cursanti.cnp`. Rollback-ul rămâne neexecutat și distructiv.
-
+**Starea de plecare:** autentificarea SSR este funcțională; cele patru roluri sunt protejate server-side; RLS este validat practic și prin audit de catalog; există 10 helperi `intern`, 30 operații private `operatii`, 30 wrapper-e RPC publice și 10 politici RLS. CNP-ul nu este citibil direct, jurnalul de audit nu este expus rolurilor API, iar build-ul de producție trece cu `npm audit --omit=dev` la zero vulnerabilități.
 ## 15. Surse tehnice pentru verificare la implementare
 
 Consultate la 23.09.2026; înaintea fiecărei etape se verifică documentația versiunii instalate.
