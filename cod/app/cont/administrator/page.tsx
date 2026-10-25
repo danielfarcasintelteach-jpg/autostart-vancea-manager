@@ -20,7 +20,7 @@ export default async function PaginaAdministrator() {
       sectiuni={[
         "Conturi și roluri",
         { eticheta: "Cursanți", href: "/cont/cursanti" },
-        "Instructori",
+        { eticheta: "Instructori", href: "/cont/instructori" },
         "Vehicule",
         "Înscrieri și programări",
         "Plăți și examene",

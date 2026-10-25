@@ -19,7 +19,7 @@ export default async function PaginaSecretariat() {
       descriere="Ai acces la activitățile administrative ale școlii, fără administrarea conturilor și rolurilor."
       sectiuni={[
         { eticheta: "Cursanți", href: "/cont/cursanti" },
-        "Instructori",
+        { eticheta: "Instructori", href: "/cont/instructori" },
         "Vehicule",
         "Înscrieri și programări",
         "Plăți și examene",
