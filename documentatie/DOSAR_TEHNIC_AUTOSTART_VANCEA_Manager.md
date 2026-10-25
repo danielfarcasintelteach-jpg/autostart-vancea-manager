@@ -1,9 +1,9 @@
 # AUTOSTART VANCEA Manager — dosar tehnic central
 
-**Versiune:** 1.4 — starea aplicării și auditării Etapei 3.6
+**Versiune:** 1.5 — starea consolidării Etapei 4
 **Data inițială:** 23.09.2026; **actualizat:** 25.10.2026
 **Domeniu:** administrarea unei școli de șoferi, exclusiv categoria B  
-**Stadiu:** Etapa 3.6 încheiată și validată. Blocul 3.x este închis din punct de vedere al autentificării SSR, profilurilor și rolurilor, rutelor protejate, citirilor server-side filtrate prin RLS, operațiilor SQL controlate, protecției CNP, auditului și idempotentei. Auditul final este consemnat în `documentatie/ETAPA_3_6_RAPORT_AUDIT_INTEGRARE_SECURITATE.md`. Stiva validată este Next.js 16.4.3 + React 19.2.9. Operațiile CRUD complete și modulele funcționale continuă în etapele următoare.
+**Stadiu:** Etapa 4 încheiată și validată. Setul demonstrativ stabil este format din patru conturi oficiale pentru rolurile `administrator`, `secretariat`, `instructor` și `cursant`, plus patru identități Auth tehnice fără profil pentru scenariile de test. Setul persistent Demo35C conține două linii A/B pentru instructori, cursanți, vehicule, înscrieri, programări, plăți și examene. Auditul este consemnat în `documentatie/ETAPA_4_RAPORT_CONTURI_DATE_DEMO.md` și este reproductibil prin `baza_date/teste/ETAPA_4_AUDIT_CONTURI_DATE_DEMO.sql`. Modelul de securitate al Etapei 3.6 rămâne neschimbat.
 
 ## 1. Scop, limite și vocabular
 
@@ -315,9 +315,11 @@ Proiectul este complet când:
 
 ## 14. Următoarea etapă
 
-**Etapa 4 — consolidarea conturilor și datelor demonstrative.** Blocul 3.x este închis și auditat. Conturile demonstrative folosite în testele de securitate se inventariază și se păstrează exclusiv cu date fictive, apoi se pregătește setul demonstrativ stabil necesar dezvoltării modulelor funcționale. Operațiile și citirile nou introduse trebuie să reutilizeze mecanismele de autorizare, RLS și RPC validate în Etapa 3.6.
+**Etapa 5 — Cursanți.** Pe baza conturilor și datelor demonstrative consolidate în Etapa 4 se construiește primul modul funcțional complet al aplicației: lista cursanților, căutarea și filtrarea, pagina individuală, crearea și modificarea datelor permise, schimbarea stării și fluxul controlat pentru CNP.
 
-**Starea de plecare:** autentificarea SSR este funcțională; cele patru roluri sunt protejate server-side; RLS este validat practic și prin audit de catalog; există 10 helperi `intern`, 30 operații private `operatii`, 30 wrapper-e RPC publice și 10 politici RLS. CNP-ul nu este citibil direct, jurnalul de audit nu este expus rolurilor API, iar build-ul de producție trece cu `npm audit --omit=dev` la zero vulnerabilități.
+Operațiile de scriere vor reutiliza exclusiv RPC-urile și mecanismele de autorizare validate în blocul 3.x. CNP-ul nu va fi inclus în citirile obișnuite și nu va fi trimis către rolurile `instructor` sau `cursant`.
+
+**Starea de plecare:** există opt conturi Auth fictive, dintre care patru sunt conturile oficiale demo ale celor patru roluri și patru sunt identități tehnice fără profil. Setul Demo35C conține două linii A/B complete și stabile pentru dezvoltare și regresie.
 ## 15. Surse tehnice pentru verificare la implementare
 
 Consultate la 23.09.2026; înaintea fiecărei etape se verifică documentația versiunii instalate.
