@@ -1,12 +1,21 @@
+import Link from "next/link";
+
 import { deconecteaza } from "@/app/cont/actiuni";
 import { etichetaRol, type RolAplicatie } from "@/lib/acces/roluri";
 import type { ElementRezumatAcces } from "@/lib/date/rezumat-acces";
+
+type SectiunePanou =
+  | string
+  | {
+      eticheta: string;
+      href: string;
+    };
 
 type PanouRolProps = {
   rol: RolAplicatie;
   titlu: string;
   descriere: string;
-  sectiuni: readonly string[];
+  sectiuni: readonly SectiunePanou[];
   dateVizibile: readonly ElementRezumatAcces[];
 };
 
@@ -27,7 +36,10 @@ export function PanouRol({
             </p>
             <h1 className="text-2xl font-semibold">{titlu}</h1>
             <p className="mt-2 text-sm text-zinc-600">
-              Rol activ: <span className="font-medium text-zinc-950">{etichetaRol(rol)}</span>
+              Rol activ:{" "}
+              <span className="font-medium text-zinc-950">
+                {etichetaRol(rol)}
+              </span>
             </p>
           </div>
 
@@ -44,22 +56,44 @@ export function PanouRol({
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <p className="max-w-3xl text-zinc-600">{descriere}</p>
 
-          <h2 className="mt-8 text-lg font-semibold">Zone disponibile pentru acest rol</h2>
+          <h2 className="mt-8 text-lg font-semibold">
+            Zone disponibile pentru acest rol
+          </h2>
+
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {sectiuni.map((sectiune) => (
-              <div
-                className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm font-medium text-zinc-800"
-                key={sectiune}
-              >
-                {sectiune}
-              </div>
-            ))}
+            {sectiuni.map((sectiune) => {
+              if (typeof sectiune === "string") {
+                return (
+                  <div
+                    className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm font-medium text-zinc-800"
+                    key={sectiune}
+                  >
+                    {sectiune}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  className="rounded-xl border border-zinc-300 bg-white px-4 py-4 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-100"
+                  href={sectiune.href}
+                  key={sectiune.href}
+                >
+                  {sectiune.eticheta}
+                  <span className="ml-2 text-zinc-400">→</span>
+                </Link>
+              );
+            })}
           </div>
 
-          <h2 className="mt-8 text-lg font-semibold">Date vizibile prin regulile de acces</h2>
+          <h2 className="mt-8 text-lg font-semibold">
+            Date vizibile prin regulile de acces
+          </h2>
+
           <p className="mt-2 max-w-3xl text-sm text-zinc-600">
-            Numerele sunt calculate pe server cu sesiunea curentă. Politicile RLS filtrează
-            fiecare interogare, iar această verificare nu afișează date personale.
+            Numerele sunt calculate pe server cu sesiunea curentă. Politicile
+            RLS filtrează fiecare interogare, iar această verificare nu afișează
+            date personale.
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -77,8 +111,8 @@ export function PanouRol({
           </div>
 
           <p className="mt-6 text-sm text-zinc-500">
-            Etapa 3.5B conectează interfața la citiri server-side filtrate de RLS.
-            Operațiile CRUD complete rămân în etapele funcționale dedicate.
+            Citirile sunt server-side și respectă politicile RLS. Modulele
+            funcționale devin accesibile progresiv din aceste zone.
           </p>
         </div>
       </section>

@@ -19,7 +19,8 @@ export default async function PaginaAdministrator() {
       descriere="Ai acces la administrarea completă a aplicației, în limitele operațiilor controlate și auditate."
       sectiuni={[
         "Conturi și roluri",
-        "Cursanți și instructori",
+        { eticheta: "Cursanți", href: "/cont/cursanti" },
+        "Instructori",
         "Vehicule",
         "Înscrieri și programări",
         "Plăți și examene",

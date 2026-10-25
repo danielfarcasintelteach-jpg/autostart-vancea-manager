@@ -18,7 +18,8 @@ export default async function PaginaSecretariat() {
       titlu="Panou secretariat"
       descriere="Ai acces la activitățile administrative ale școlii, fără administrarea conturilor și rolurilor."
       sectiuni={[
-        "Cursanți și instructori",
+        { eticheta: "Cursanți", href: "/cont/cursanti" },
+        "Instructori",
         "Vehicule",
         "Înscrieri și programări",
         "Plăți și examene",
