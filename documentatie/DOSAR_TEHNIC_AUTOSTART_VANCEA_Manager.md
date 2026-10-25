@@ -1,9 +1,9 @@
 # AUTOSTART VANCEA Manager — dosar tehnic central
 
-**Versiune:** 1.2 — starea aplicării și testării Etapei 2B
-**Data inițială:** 23.09.2026; **actualizat:** 19.10.2026
+**Versiune:** 1.3 — starea aplicării și testării Etapei 3.5C
+**Data inițială:** 23.09.2026; **actualizat:** 25.10.2026
 **Domeniu:** administrarea unei școli de șoferi, exclusiv categoria B  
-**Stadiu:** Etapa 2B încheiată: migrarea inițială a fost aplicată și testată în Supabase de dezvoltare; rezultatele sunt consemnate în `ETAPA_2B_RAPORT_APLICARE_SI_TESTARE.md`. RLS este activ pe cele nouă tabele, fără politici operaționale; acestea urmează în Etapa 3. Acest dosar rămâne document de proiectare, nu script SQL executabil.
+**Stadiu:** Etapa 3.5C încheiată și validată: autentificarea SSR, profilurile și rolurile, rutele protejate pe roluri, citirile server-side și filtrarea prin RLS sunt funcționale. Separarea practică a datelor a fost verificată în interfață pentru `secretariat`, `instructor` și `cursant`, folosind două seturi distincte de date demonstrative. Rezultatele sunt consemnate în `documentatie/ETAPA_3_5C_RAPORT_VALIDARE_RLS_UI.md`. Operațiile CRUD complete rămân în etapele funcționale dedicate. Acest dosar rămâne document de proiectare, nu script SQL executabil.
 
 ## 1. Scop, limite și vocabular
 
