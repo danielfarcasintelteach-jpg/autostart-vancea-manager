@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { obtineProfilCurent } from "@/lib/acces/profil-curent";
+import { caleContPentruRol } from "@/lib/acces/roluri";
 
 import { deconecteaza } from "./actiuni";
 
@@ -26,6 +27,10 @@ export default async function PaginaCont({
 
   const { deconectare } = await searchParams;
 
+  if (profil.stare === "activ" && deconectare !== "eroare") {
+    redirect(caleContPentruRol(profil.rol));
+  }
+
   return (
     <main className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-12 text-zinc-950">
       <section className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
@@ -33,12 +38,8 @@ export default async function PaginaCont({
           AUTOSTART VANCEA Manager
         </p>
         <h1 className="mb-3 text-2xl font-semibold">Cont</h1>
-        {profil.stare === "activ" ? (
-          <div className="mb-6 space-y-2 text-sm text-zinc-600">
-            <p>Rol: <span className="font-medium text-zinc-950">{profil.rol}</span></p>
-            <p>Cont activ</p>
-          </div>
-        ) : (
+
+        {profil.stare === "eroare" && (
           <p className="mb-6 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
             Accesul la cont nu este disponibil momentan. Încearcă din nou mai târziu.
           </p>

@@ -1,19 +1,13 @@
 import { isAuthSessionMissingError } from "@supabase/supabase-js";
 
+import { esteRolAplicatie, type RolAplicatie } from "@/lib/acces/roluri";
 import { creeazaClientServer } from "@/lib/supabase/server";
-
-type RolAplicatie = "administrator" | "secretariat" | "instructor" | "cursant";
 
 export type StareProfilCurent =
   | { stare: "neautentificat" }
   | { stare: "neactivat" }
   | { stare: "eroare" }
   | { stare: "activ"; rol: RolAplicatie };
-
-function esteRolAplicatie(rol: unknown): rol is RolAplicatie {
-  return rol === "administrator" || rol === "secretariat" ||
-    rol === "instructor" || rol === "cursant";
-}
 
 // creeazaClientServer depinde de next/headers; acest modul poate fi folosit doar pe server.
 export async function obtineProfilCurent(): Promise<StareProfilCurent> {
