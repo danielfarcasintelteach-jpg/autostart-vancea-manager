@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CampDataRo } from "@/app/cont/_componente/camp-data-ro";
 
 import {
   actualizeazaDatePersonaleCursant,
@@ -307,13 +308,15 @@ export default async function PaginaDetaliiCursant({
                   Data nașterii
                 </label>
 
-                <input
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
-                  defaultValue={cursant.data_nasterii ?? ""}
-                  id="data_nasterii"
-                  name="data_nasterii"
-                  type="date"
-                />
+                              <CampDataRo
+                defaultValue={
+                  cursant.data_nasterii
+                    ? formateazaData(cursant.data_nasterii)
+                    : ""
+                }
+                id="data_nasterii"
+                name="data_nasterii"
+              />
               </div>
 
               <div className="sm:col-span-2">

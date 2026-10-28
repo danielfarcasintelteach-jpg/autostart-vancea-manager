@@ -64,15 +64,15 @@ function citesteDataOptionala(
     return null;
   }
 
-  const potrivire = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valoare);
+  const potrivire = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(valoare);
 
   if (!potrivire) {
     return undefined;
   }
 
-  const an = Number(potrivire[1]);
+  const zi = Number(potrivire[1]);
   const luna = Number(potrivire[2]);
-  const zi = Number(potrivire[3]);
+  const an = Number(potrivire[3]);
 
   const data = new Date(Date.UTC(an, luna - 1, zi));
 
@@ -84,7 +84,11 @@ function citesteDataOptionala(
     return undefined;
   }
 
-  return valoare;
+  const anIso = String(an).padStart(4, "0");
+  const lunaIso = String(luna).padStart(2, "0");
+  const ziIso = String(zi).padStart(2, "0");
+
+  return `${anIso}-${lunaIso}-${ziIso}`;
 }
 
 function emailValid(email: string | null): boolean {

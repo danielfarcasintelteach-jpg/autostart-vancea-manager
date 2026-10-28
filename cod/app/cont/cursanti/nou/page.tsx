@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CampDataRo } from "@/app/cont/_componente/camp-data-ro";
 
 import { creeazaCursant } from "@/app/cont/cursanti/actiuni";
 import { cereRoluri } from "@/lib/acces/protectie-ruta";
@@ -174,12 +175,7 @@ export default async function PaginaCursantNou({
                 Data nașterii
               </label>
 
-              <input
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
-                id="data_nasterii"
-                name="data_nasterii"
-                type="date"
-              />
+                            <CampDataRo id="data_nasterii" name="data_nasterii" />
             </div>
 
             <div>
