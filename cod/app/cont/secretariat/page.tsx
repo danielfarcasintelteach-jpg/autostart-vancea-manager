@@ -20,7 +20,7 @@ export default async function PaginaSecretariat() {
       sectiuni={[
         { eticheta: "Cursanți", href: "/cont/cursanti" },
         { eticheta: "Instructori", href: "/cont/instructori" },
-        "Vehicule",
+        { eticheta: "Vehicule", href: "/cont/vehicule" },
         "Înscrieri și programări",
         "Plăți și examene",
       ]}

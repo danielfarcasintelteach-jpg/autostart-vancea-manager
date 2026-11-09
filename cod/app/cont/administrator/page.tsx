@@ -21,7 +21,7 @@ export default async function PaginaAdministrator() {
         "Conturi și roluri",
         { eticheta: "Cursanți", href: "/cont/cursanti" },
         { eticheta: "Instructori", href: "/cont/instructori" },
-        "Vehicule",
+        { eticheta: "Vehicule", href: "/cont/vehicule" },
         "Înscrieri și programări",
         "Plăți și examene",
       ]}
