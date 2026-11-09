@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { CampDataRo } from "@/app/cont/_componente/camp-data-ro";
+import {
+  actualizeazaDatePersonaleInstructor,
+  actualizeazaDateProfesionaleInstructor,
+} from "@/app/cont/instructori/actiuni";
 import { cereRoluri } from "@/lib/acces/protectie-ruta";
 import { citesteDetaliiInstructorAdministrativ } from "@/lib/date/instructori";
 
@@ -11,15 +16,6 @@ export const metadata: Metadata = {
 
 const FORMAT_UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function afiseazaValoare(
-  valoare: string | null,
-  fallback = "Nespecificat",
-) {
-  const text = valoare?.trim();
-
-  return text ? text : fallback;
-}
 
 function formateazaData(
   valoare: string | null,
@@ -50,6 +46,25 @@ function mesajSucces(cod: string | undefined) {
   switch (cod) {
     case "instructor_creat":
       return "Instructorul a fost creat cu succes.";
+    case "date_personale_actualizate":
+      return "Datele personale ale instructorului au fost actualizate.";
+    case "date_profesionale_actualizate":
+      return "Datele profesionale ale instructorului au fost actualizate.";
+    default:
+      return null;
+  }
+}
+
+function mesajEroare(cod: string | undefined) {
+  switch (cod) {
+    case "date_personale_invalide":
+      return "Verifică datele personale introduse.";
+    case "date_profesionale_invalide":
+      return "Verifică data angajării și observațiile introduse.";
+    case "actualizare_esuata":
+      return "Actualizarea nu a putut fi efectuată.";
+    case "server":
+      return "Operația nu a putut fi finalizată din cauza unei erori.";
     default:
       return null;
   }
@@ -60,7 +75,10 @@ export default async function PaginaDetaliiInstructor({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ mesaj?: Parametru }>;
+  searchParams: Promise<{
+    mesaj?: Parametru;
+    eroare?: Parametru;
+  }>;
 }) {
   const profil = await cereRoluri("administrator", "secretariat");
   const { id } = await params;
@@ -82,6 +100,13 @@ export default async function PaginaDetaliiInstructor({
       : "/cont/secretariat";
 
   const succes = mesajSucces(primaValoare(parametri.mesaj));
+  const eroare = mesajEroare(primaValoare(parametri.eroare));
+
+  const actiuneDatePersonale =
+    actualizeazaDatePersonaleInstructor.bind(null, id);
+
+  const actiuneDateProfesionale =
+    actualizeazaDateProfesionaleInstructor.bind(null, id);
 
   return (
     <main className="flex flex-1 justify-center bg-zinc-50 px-4 py-8 text-zinc-950 sm:px-6 sm:py-12">
@@ -139,121 +164,178 @@ export default async function PaginaDetaliiInstructor({
           </div>
         )}
 
+        {eroare && (
+          <div
+            className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            role="alert"
+          >
+            {eroare}
+          </div>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-2">
-          <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <form
+            action={actiuneDatePersonale}
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+          >
             <h2 className="text-lg font-semibold">Date personale</h2>
 
-            <dl className="mt-5 divide-y divide-zinc-100">
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
-                  Nume
-                </dt>
-                <dd className="text-sm text-zinc-900">
-                  {instructor.nume}
-                </dd>
+            <p className="mt-1 text-sm text-zinc-500">
+              Numele și prenumele sunt obligatorii.
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700" htmlFor="nume">
+                  Nume *
+                </label>
+                <input
+                  autoComplete="family-name"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+                  defaultValue={instructor.nume}
+                  id="nume"
+                  maxLength={100}
+                  name="nume"
+                  required
+                  type="text"
+                />
               </div>
 
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
-                  Prenume
-                </dt>
-                <dd className="text-sm text-zinc-900">
-                  {instructor.prenume}
-                </dd>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700" htmlFor="prenume">
+                  Prenume *
+                </label>
+                <input
+                  autoComplete="given-name"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+                  defaultValue={instructor.prenume}
+                  id="prenume"
+                  maxLength={100}
+                  name="prenume"
+                  required
+                  type="text"
+                />
               </div>
 
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700" htmlFor="telefon">
                   Telefon
-                </dt>
-                <dd className="text-sm text-zinc-900">
-                  {afiseazaValoare(instructor.telefon)}
-                </dd>
+                </label>
+                <input
+                  autoComplete="tel"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+                  defaultValue={instructor.telefon ?? ""}
+                  id="telefon"
+                  maxLength={30}
+                  name="telefon"
+                  type="tel"
+                />
               </div>
 
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700" htmlFor="email">
                   E-mail
-                </dt>
-                <dd className="break-all text-sm text-zinc-900">
-                  {afiseazaValoare(instructor.email)}
-                </dd>
+                </label>
+                <input
+                  autoComplete="email"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+                  defaultValue={instructor.email ?? ""}
+                  id="email"
+                  maxLength={254}
+                  name="email"
+                  type="email"
+                />
               </div>
 
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
+              <div className="sm:col-span-2">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700" htmlFor="data_nasterii">
                   Data nașterii
-                </dt>
-                <dd className="text-sm text-zinc-900">
-                  {formateazaData(instructor.data_nasterii)}
-                </dd>
+                </label>
+                <CampDataRo
+                  defaultValue={
+                    instructor.data_nasterii
+                      ? formateazaData(instructor.data_nasterii)
+                      : ""
+                  }
+                  id="data_nasterii"
+                  name="data_nasterii"
+                />
               </div>
 
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
+              <div className="sm:col-span-2">
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700" htmlFor="adresa">
                   Adresă
-                </dt>
-                <dd className="whitespace-pre-wrap text-sm text-zinc-900">
-                  {afiseazaValoare(instructor.adresa)}
-                </dd>
+                </label>
+                <textarea
+                  className="min-h-24 w-full resize-y rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+                  defaultValue={instructor.adresa ?? ""}
+                  id="adresa"
+                  maxLength={1000}
+                  name="adresa"
+                />
               </div>
-            </dl>
-          </section>
+            </div>
 
-          <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">
-              Date profesionale
-            </h2>
+            <button
+              className="mt-5 rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+              type="submit"
+            >
+              Salvează datele personale
+            </button>
+          </form>
 
-            <dl className="mt-5 divide-y divide-zinc-100">
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
-                  Data angajării
-                </dt>
-                <dd className="text-sm text-zinc-900">
-                  {formateazaData(instructor.data_angajarii)}
-                </dd>
-              </div>
+          <form
+            action={actiuneDateProfesionale}
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+          >
+            <h2 className="text-lg font-semibold">Date profesionale</h2>
 
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
-                  Stare instructor
-                </dt>
-                <dd className="text-sm text-zinc-900">
-                  {instructor.stare === "activ" ? "Activ" : "Inactiv"}
-                </dd>
-              </div>
+            <p className="mt-1 text-sm text-zinc-500">
+              Datele profesionale sunt administrate separat de datele personale.
+            </p>
 
-              <div className="grid gap-1 py-3 sm:grid-cols-[160px_1fr]">
-                <dt className="text-sm font-medium text-zinc-500">
-                  ID persoană
-                </dt>
-                <dd className="break-all text-sm text-zinc-900">
-                  {instructor.id_persoana}
-                </dd>
-              </div>
-            </dl>
+            <div className="mt-5">
+              <label className="mb-1.5 block text-sm font-medium text-zinc-700" htmlFor="data_angajarii">
+                Data angajării
+              </label>
+              <CampDataRo
+                defaultValue={
+                  instructor.data_angajarii
+                    ? formateazaData(instructor.data_angajarii)
+                    : ""
+                }
+                id="data_angajarii"
+                name="data_angajarii"
+              />
+            </div>
+
+            <div className="mt-5">
+              <label className="mb-1.5 block text-sm font-medium text-zinc-700" htmlFor="observatii">
+                Observații
+              </label>
+              <textarea
+                className="min-h-40 w-full resize-y rounded-lg border border-zinc-300 px-3 py-2.5 text-sm outline-none transition focus:border-zinc-500"
+                defaultValue={instructor.observatii ?? ""}
+                id="observatii"
+                maxLength={2000}
+                name="observatii"
+              />
+            </div>
+
+            <button
+              className="mt-5 rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+              type="submit"
+            >
+              Salvează datele profesionale
+            </button>
 
             <div className="mt-5 border-t border-zinc-200 pt-5">
               <p className="text-sm leading-6 text-zinc-600">
-                Crearea instructorului este disponibilă prin fluxul
-                controlat. Modificarea și activarea/dezactivarea vor fi
-                conectate în subetapele următoare.
+                Schimbarea stării Activ/Inactiv rămâne separată și va fi conectată în Etapa 5D4.
               </p>
             </div>
-          </section>
+          </form>
         </div>
-
-        <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold">Observații</h2>
-
-          <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-zinc-700">
-            {afiseazaValoare(
-              instructor.observatii,
-              "Nu sunt observații înregistrate.",
-            )}
-          </p>
-        </section>
       </section>
     </main>
   );

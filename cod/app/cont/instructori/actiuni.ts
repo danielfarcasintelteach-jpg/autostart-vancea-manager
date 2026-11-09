@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { verificaRoluriServer } from "@/lib/acces/autorizare";
 import { caleContPentruRol } from "@/lib/acces/roluri";
+import { citesteDetaliiInstructorAdministrativ } from "@/lib/date/instructori";
 import { creeazaClientServer } from "@/lib/supabase/server";
 
 const FORMAT_UUID =
@@ -219,6 +220,222 @@ export async function creeazaInstructor(
     caleDetalii(
       idInstructor,
       "mesaj=instructor_creat",
+    ),
+  );
+}
+
+export async function actualizeazaDatePersonaleInstructor(
+  idInstructor: string,
+  formData: FormData,
+) {
+  await cereAccesAdministrativ();
+
+  if (!FORMAT_UUID.test(idInstructor)) {
+    redirect("/cont/instructori");
+  }
+
+  const nume = citesteText(formData, "nume");
+  const prenume = citesteText(formData, "prenume");
+  const telefon = citesteTextOptional(formData, "telefon", 30);
+  const email = citesteTextOptional(formData, "email", 254);
+  const dataNasterii = citesteDataOptionala(
+    formData,
+    "data_nasterii",
+  );
+  const adresa = citesteTextOptional(formData, "adresa", 1000);
+
+  if (
+    !nume ||
+    nume.length > 100 ||
+    !prenume ||
+    prenume.length > 100 ||
+    telefon === undefined ||
+    email === undefined ||
+    !emailValid(email) ||
+    dataNasterii === undefined ||
+    adresa === undefined
+  ) {
+    redirect(
+      caleDetalii(
+        idInstructor,
+        "eroare=date_personale_invalide",
+      ),
+    );
+  }
+
+  let instructor;
+
+  try {
+    instructor = await citesteDetaliiInstructorAdministrativ(
+      idInstructor,
+    );
+  } catch {
+    redirect(
+      caleDetalii(
+        idInstructor,
+        "eroare=server",
+      ),
+    );
+  }
+
+  if (!instructor) {
+    redirect("/cont/instructori?eroare=instructor_inexistent");
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc("modifica_persoana", {
+      p_id_persoana: instructor.id_persoana,
+      p_modificari: {
+        nume,
+        prenume,
+        telefon,
+        email,
+        data_nasterii: dataNasterii,
+        adresa,
+      },
+    });
+  } catch {
+    redirect(
+      caleDetalii(
+        idInstructor,
+        "eroare=server",
+      ),
+    );
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect("/cont/instructori?eroare=instructor_inexistent");
+    }
+
+    if (
+      rezultat.error.code === "22023" ||
+      rezultat.error.code === "23514"
+    ) {
+      redirect(
+        caleDetalii(
+          idInstructor,
+          "eroare=date_personale_invalide",
+        ),
+      );
+    }
+
+    redirect(
+      caleDetalii(
+        idInstructor,
+        "eroare=actualizare_esuata",
+      ),
+    );
+  }
+
+  revalidatePath("/cont/instructori");
+  revalidatePath(`/cont/instructori/${idInstructor}`);
+
+  redirect(
+    caleDetalii(
+      idInstructor,
+      "mesaj=date_personale_actualizate",
+    ),
+  );
+}
+
+export async function actualizeazaDateProfesionaleInstructor(
+  idInstructor: string,
+  formData: FormData,
+) {
+  await cereAccesAdministrativ();
+
+  if (!FORMAT_UUID.test(idInstructor)) {
+    redirect("/cont/instructori");
+  }
+
+  const dataAngajarii = citesteDataOptionala(
+    formData,
+    "data_angajarii",
+  );
+  const observatii = citesteTextOptional(
+    formData,
+    "observatii",
+    2000,
+  );
+
+  if (
+    dataAngajarii === undefined ||
+    observatii === undefined
+  ) {
+    redirect(
+      caleDetalii(
+        idInstructor,
+        "eroare=date_profesionale_invalide",
+      ),
+    );
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc("modifica_instructor", {
+      p_id_instructor: idInstructor,
+      p_modificari: {
+        data_angajarii: dataAngajarii,
+        observatii,
+      },
+    });
+  } catch {
+    redirect(
+      caleDetalii(
+        idInstructor,
+        "eroare=server",
+      ),
+    );
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect("/cont/instructori?eroare=instructor_inexistent");
+    }
+
+    if (
+      rezultat.error.code === "22023" ||
+      rezultat.error.code === "23514"
+    ) {
+      redirect(
+        caleDetalii(
+          idInstructor,
+          "eroare=date_profesionale_invalide",
+        ),
+      );
+    }
+
+    redirect(
+      caleDetalii(
+        idInstructor,
+        "eroare=actualizare_esuata",
+      ),
+    );
+  }
+
+  revalidatePath("/cont/instructori");
+  revalidatePath(`/cont/instructori/${idInstructor}`);
+
+  redirect(
+    caleDetalii(
+      idInstructor,
+      "mesaj=date_profesionale_actualizate",
     ),
   );
 }
