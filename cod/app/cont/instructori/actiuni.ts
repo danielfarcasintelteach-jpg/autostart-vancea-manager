@@ -439,3 +439,63 @@ export async function actualizeazaDateProfesionaleInstructor(
     ),
   );
 }
+
+export async function schimbaStareInstructor(
+  idInstructor: string,
+  stareNoua: "activ" | "inactiv",
+) {
+  await cereAccesAdministrativ();
+
+  if (
+    !FORMAT_UUID.test(idInstructor) ||
+    !["activ", "inactiv"].includes(stareNoua)
+  ) {
+    redirect("/cont/instructori");
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc("schimba_stare_instructor", {
+      p_id_instructor: idInstructor,
+      p_stare: stareNoua,
+    });
+  } catch {
+    redirect(caleDetalii(idInstructor, "eroare=server"));
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect("/cont/instructori?eroare=instructor_inexistent");
+    }
+
+    if (rezultat.error.code === "PZ003") {
+      redirect(
+        caleDetalii(
+          idInstructor,
+          "eroare=tranzitie_stare_refuzata",
+        ),
+      );
+    }
+
+    redirect(caleDetalii(idInstructor, "eroare=server"));
+  }
+
+  revalidatePath("/cont/instructori");
+  revalidatePath(`/cont/instructori/${idInstructor}`);
+
+  redirect(
+    caleDetalii(
+      idInstructor,
+      stareNoua === "activ"
+        ? "mesaj=instructor_activat"
+        : "mesaj=instructor_dezactivat",
+    ),
+  );
+}

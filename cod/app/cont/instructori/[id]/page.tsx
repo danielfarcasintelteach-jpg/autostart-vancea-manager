@@ -6,6 +6,7 @@ import { CampDataRo } from "@/app/cont/_componente/camp-data-ro";
 import {
   actualizeazaDatePersonaleInstructor,
   actualizeazaDateProfesionaleInstructor,
+  schimbaStareInstructor,
 } from "@/app/cont/instructori/actiuni";
 import { cereRoluri } from "@/lib/acces/protectie-ruta";
 import { citesteDetaliiInstructorAdministrativ } from "@/lib/date/instructori";
@@ -50,6 +51,10 @@ function mesajSucces(cod: string | undefined) {
       return "Datele personale ale instructorului au fost actualizate.";
     case "date_profesionale_actualizate":
       return "Datele profesionale ale instructorului au fost actualizate.";
+    case "instructor_activat":
+      return "Instructorul a fost activat cu succes.";
+    case "instructor_dezactivat":
+      return "Instructorul a fost dezactivat cu succes.";
     default:
       return null;
   }
@@ -63,6 +68,8 @@ function mesajEroare(cod: string | undefined) {
       return "Verifică data angajării și observațiile introduse.";
     case "actualizare_esuata":
       return "Actualizarea nu a putut fi efectuată.";
+    case "tranzitie_stare_refuzata":
+      return "Starea instructorului nu poate fi schimbată. Dezactivarea este refuzată dacă există o înscriere activă sau o ședință programată care nu s-a încheiat.";
     case "server":
       return "Operația nu a putut fi finalizată din cauza unei erori.";
     default:
@@ -107,6 +114,15 @@ export default async function PaginaDetaliiInstructor({
 
   const actiuneDateProfesionale =
     actualizeazaDateProfesionaleInstructor.bind(null, id);
+
+  const stareNoua =
+    instructor.stare === "activ" ? "inactiv" : "activ";
+
+  const actiuneStare = schimbaStareInstructor.bind(
+    null,
+    id,
+    stareNoua,
+  );
 
   return (
     <main className="flex flex-1 justify-center bg-zinc-50 px-4 py-8 text-zinc-950 sm:px-6 sm:py-12">
@@ -328,14 +344,53 @@ export default async function PaginaDetaliiInstructor({
             >
               Salvează datele profesionale
             </button>
-
-            <div className="mt-5 border-t border-zinc-200 pt-5">
-              <p className="text-sm leading-6 text-zinc-600">
-                Schimbarea stării Activ/Inactiv rămâne separată și va fi conectată în Etapa 5D4.
-              </p>
-            </div>
           </form>
         </div>
+        <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">
+                Stare instructor
+              </h2>
+
+              <p className="mt-1 text-sm leading-6 text-zinc-600">
+                Stare curentă:{" "}
+                <strong>
+                  {instructor.stare === "activ" ? "Activ" : "Inactiv"}
+                </strong>
+                .
+              </p>
+
+              {instructor.stare === "activ" ? (
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
+                  Dezactivarea este permisă numai dacă instructorul nu are
+                  înscrieri active și nu are ședințe programate care nu s-au
+                  încheiat.
+                </p>
+              ) : (
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
+                  Activarea face instructorul din nou disponibil pentru
+                  operațiile administrative permise de aplicație.
+                </p>
+              )}
+            </div>
+
+            <form action={actiuneStare}>
+              <button
+                className={
+                  instructor.stare === "activ"
+                    ? "rounded-lg border border-red-300 bg-white px-5 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+                    : "rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-600"
+                }
+                type="submit"
+              >
+                {instructor.stare === "activ"
+                  ? "Dezactivează instructorul"
+                  : "Activează instructorul"}
+              </button>
+            </form>
+          </div>
+        </section>
       </section>
     </main>
   );
