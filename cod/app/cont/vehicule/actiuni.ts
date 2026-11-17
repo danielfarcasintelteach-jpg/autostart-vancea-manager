@@ -304,3 +304,79 @@ export async function actualizeazaVehicul(
     ),
   );
 }
+export async function schimbaStareVehicul(
+  idVehicul: string,
+  formData: FormData,
+) {
+  await cereAccesAdministrativ();
+
+  if (!FORMAT_UUID.test(idVehicul)) {
+    redirect("/cont/vehicule");
+  }
+
+  const stare = citesteText(formData, "stare");
+
+  if (
+    !stare ||
+    !["activ", "service", "indisponibil", "inactiv"].includes(stare)
+  ) {
+    redirect(
+      caleDetalii(
+        idVehicul,
+        "eroare=stare_invalida",
+      ),
+    );
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc("schimba_stare_vehicul", {
+      p_id_vehicul: idVehicul,
+      p_stare: stare,
+    });
+  } catch {
+    redirect(caleDetalii(idVehicul, "eroare=server"));
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect("/cont/vehicule");
+    }
+
+    if (
+      rezultat.error.code === "PZ003" ||
+      rezultat.error.code === "23514"
+    ) {
+      redirect(
+        caleDetalii(
+          idVehicul,
+          "eroare=tranzitie_stare_nepermisa",
+        ),
+      );
+    }
+
+    redirect(
+      caleDetalii(
+        idVehicul,
+        "eroare=schimbare_stare_esuata",
+      ),
+    );
+  }
+
+  revalidatePath("/cont/vehicule");
+  revalidatePath(`/cont/vehicule/${idVehicul}`);
+
+  redirect(
+    caleDetalii(
+      idVehicul,
+      "mesaj=stare_actualizata",
+    ),
+  );
+}

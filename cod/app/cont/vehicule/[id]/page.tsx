@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { actualizeazaVehicul } from "@/app/cont/vehicule/actiuni";
+import {
+  actualizeazaVehicul,
+  schimbaStareVehicul,
+} from "@/app/cont/vehicule/actiuni";
 import { cereRoluri } from "@/lib/acces/protectie-ruta";
 import {
   citesteDetaliiVehiculAdministrativ,
@@ -73,6 +76,8 @@ function mesajSucces(cod: string | undefined) {
       return "Vehiculul a fost creat cu succes.";
     case "vehicul_actualizat":
       return "Datele vehiculului au fost actualizate cu succes.";
+    case "stare_actualizata":
+      return "Starea vehiculului a fost actualizată cu succes.";
     default:
       return null;
   }
@@ -85,6 +90,12 @@ function mesajEroare(cod: string | undefined) {
       return "Există deja un alt vehicul cu acest număr de înmatriculare.";
     case "actualizare_esuata":
       return "Actualizarea vehiculului nu a putut fi efectuată.";
+    case "stare_invalida":
+      return "Starea selectată nu este validă.";
+    case "tranzitie_stare_nepermisa":
+      return "Schimbarea stării nu este permisă. Vehiculul poate avea o ședință activă sau programată ori starea selectată poate fi deja cea curentă.";
+    case "schimbare_stare_esuata":
+      return "Starea vehiculului nu a putut fi actualizată.";
     case "server":
       return "Operația nu a putut fi finalizată din cauza unei erori.";
     default:
@@ -124,6 +135,7 @@ export default async function PaginaDetaliiVehicul({
   const succes = mesajSucces(primaValoare(parametri.mesaj));
   const eroare = mesajEroare(primaValoare(parametri.eroare));
   const actiuneActualizare = actualizeazaVehicul.bind(null, id);
+  const actiuneSchimbareStare = schimbaStareVehicul.bind(null, id);
 
   return (
     <main className="flex flex-1 justify-center bg-zinc-50 px-4 py-8 text-zinc-950 sm:px-6 sm:py-12">
@@ -221,6 +233,55 @@ export default async function PaginaDetaliiVehicul({
           </div>
         </section>
 
+        <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-semibold">
+              Schimbă starea vehiculului
+            </h2>
+
+            <p className="mt-1 text-sm text-zinc-500">
+              Starea se modifică separat de datele vehiculului. Baza de date
+              blochează trecerea la o stare diferită de Activ atunci când
+              există ședințe active sau programate.
+            </p>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-sm text-zinc-600">
+              Starea curentă:
+            </span>
+
+            <span className={clasaStare(vehicul.stare)}>
+              {etichetaStare(vehicul.stare)}
+            </span>
+          </div>
+
+          <form
+            action={actiuneSchimbareStare}
+            className="mt-5 flex flex-wrap gap-2"
+          >
+            {(
+              [
+                ["activ", "Activ"],
+                ["service", "Service"],
+                ["indisponibil", "Indisponibil"],
+                ["inactiv", "Inactiv"],
+              ] as const
+            )
+              .filter(([stare]) => stare !== vehicul.stare)
+              .map(([stare, eticheta]) => (
+                <button
+                  className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100"
+                  key={stare}
+                  name="stare"
+                  type="submit"
+                  value={stare}
+                >
+                  Marchează {eticheta.toLowerCase()}
+                </button>
+              ))}
+          </form>
+        </section>
         <form
           action={actiuneActualizare}
           className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
@@ -347,8 +408,8 @@ export default async function PaginaDetaliiVehicul({
         </form>
 
         <p className="mt-5 text-sm text-zinc-500">
-          Citirea, crearea și modificarea vehiculelor folosesc operații
-          server-side controlate. Schimbarea stării va fi conectată separat.
+          Citirea, crearea, modificarea și schimbarea stării vehiculelor
+          folosesc operații server-side controlate.
         </p>
       </section>
     </main>
