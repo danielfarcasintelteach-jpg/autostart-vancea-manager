@@ -60,13 +60,31 @@ function CampDetaliu({
   );
 }
 
+type Parametru = string | string[] | undefined;
+
+function primaValoare(valoare: Parametru) {
+  return Array.isArray(valoare) ? valoare[0] : valoare;
+}
+
+function mesajSucces(cod: string | undefined) {
+  switch (cod) {
+    case "vehicul_creat":
+      return "Vehiculul a fost creat cu succes.";
+    default:
+      return null;
+  }
+}
+
 export default async function PaginaDetaliiVehicul({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ mesaj?: Parametru }>;
 }) {
   const profil = await cereRoluri("administrator", "secretariat");
   const { id } = await params;
+  const parametri = await searchParams;
 
   if (!FORMAT_UUID.test(id)) {
     notFound();
@@ -82,6 +100,8 @@ export default async function PaginaDetaliiVehicul({
     profil.rol === "administrator"
       ? "/cont/administrator"
       : "/cont/secretariat";
+
+  const succes = mesajSucces(primaValoare(parametri.mesaj));
 
   return (
     <main className="flex flex-1 justify-center bg-zinc-50 px-4 py-8 text-zinc-950 sm:px-6 sm:py-12">
@@ -123,6 +143,15 @@ export default async function PaginaDetaliiVehicul({
             </Link>
           </div>
         </div>
+
+        {succes && (
+          <div
+            className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+            role="status"
+          >
+            {succes}
+          </div>
+        )}
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <div>
