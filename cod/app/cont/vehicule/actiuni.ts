@@ -195,3 +195,112 @@ export async function creeazaVehicul(
     ),
   );
 }
+export async function actualizeazaVehicul(
+  idVehicul: string,
+  formData: FormData,
+) {
+  await cereAccesAdministrativ();
+
+  if (!FORMAT_UUID.test(idVehicul)) {
+    redirect("/cont/vehicule");
+  }
+
+  const numarBrut = citesteText(formData, "numar_inmatriculare");
+  const numarInmatriculare = numarBrut?.toUpperCase() ?? null;
+  const marca = citesteText(formData, "marca");
+  const model = citesteText(formData, "model");
+  const anFabricatie = citesteAnFabricatie(formData);
+  const observatii = citesteTextOptional(
+    formData,
+    "observatii",
+    2000,
+  );
+
+  if (
+    !numarInmatriculare ||
+    numarInmatriculare.length > 20 ||
+    !/^[A-Z0-9]+$/.test(numarInmatriculare) ||
+    !marca ||
+    marca.length > 100 ||
+    !model ||
+    model.length > 100 ||
+    anFabricatie === undefined ||
+    observatii === undefined
+  ) {
+    redirect(
+      caleDetalii(
+        idVehicul,
+        "eroare=date_invalide",
+      ),
+    );
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc("modifica_vehicul", {
+      p_id_vehicul: idVehicul,
+      p_modificari: {
+        numar_inmatriculare: numarInmatriculare,
+        marca,
+        model,
+        an_fabricatie: anFabricatie,
+        observatii,
+      },
+    });
+  } catch {
+    redirect(caleDetalii(idVehicul, "eroare=server"));
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect("/cont/vehicule");
+    }
+
+    if (rezultat.error.code === "23505") {
+      redirect(
+        caleDetalii(
+          idVehicul,
+          "eroare=numar_existent",
+        ),
+      );
+    }
+
+    if (
+      rezultat.error.code === "22023" ||
+      rezultat.error.code === "23514" ||
+      rezultat.error.code === "22003" ||
+      rezultat.error.code === "22P02"
+    ) {
+      redirect(
+        caleDetalii(
+          idVehicul,
+          "eroare=date_invalide",
+        ),
+      );
+    }
+
+    redirect(
+      caleDetalii(
+        idVehicul,
+        "eroare=actualizare_esuata",
+      ),
+    );
+  }
+
+  revalidatePath("/cont/vehicule");
+  revalidatePath(`/cont/vehicule/${idVehicul}`);
+
+  redirect(
+    caleDetalii(
+      idVehicul,
+      "mesaj=vehicul_actualizat",
+    ),
+  );
+}
