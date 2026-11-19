@@ -21,7 +21,8 @@ export default async function PaginaSecretariat() {
         { eticheta: "Cursanți", href: "/cont/cursanti" },
         { eticheta: "Instructori", href: "/cont/instructori" },
         { eticheta: "Vehicule", href: "/cont/vehicule" },
-        "Înscrieri și programări",
+        { eticheta: "Înscrieri", href: "/cont/inscrieri" },
+        "Programări",
         "Plăți și examene",
       ]}
       dateVizibile={dateVizibile}
