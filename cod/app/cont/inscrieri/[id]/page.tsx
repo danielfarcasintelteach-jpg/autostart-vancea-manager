@@ -231,9 +231,8 @@ export default async function PaginaDetaliiInscriere({
         </section>
 
         <p className="mt-5 text-sm text-zinc-500">
-          În Etapa 5F1 această pagină este exclusiv pentru citire.
-          Operațiile de creare, modificare și schimbare a stării vor fi
-          implementate separat.
+          În Etapa 5F2 citirea și crearea înscrierilor sunt disponibile.
+          Modificarea și schimbarea stării vor fi implementate separat.
         </p>
       </section>
     </main>
