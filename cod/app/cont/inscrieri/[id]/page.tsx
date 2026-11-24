@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import {
   actualizeazaInscriere,
+  anuleazaInscriere,
+  finalizeazaInscriere,
   realocaInstructorInscriere,
 } from "@/app/cont/inscrieri/actiuni";
 import { cereRoluri } from "@/lib/acces/protectie-ruta";
@@ -44,6 +46,10 @@ function mesajSucces(
       return "Tariful și observațiile înscrierii au fost actualizate.";
     case "instructor_realocat":
       return "Instructorul a fost realocat cu succes.";
+    case "inscriere_finalizata":
+      return "Înscrierea a fost finalizată cu succes.";
+    case "inscriere_anulata":
+      return "Înscrierea a fost anulată cu succes.";
     case "fara_modificari":
       return "Nu au existat modificări de salvat.";
     default:
@@ -67,6 +73,10 @@ function mesajEroare(
       return "Înscrierea, cursantul sau instructorul selectat nu mai există.";
     case "realocare_refuzata":
       return "Realocarea instructorului a fost refuzată. Verifică dacă înscrierea este activă, dacă noul instructor este diferit și activ și dacă nu există ședințe programate în desfășurare sau viitoare.";
+    case "finalizare_refuzata":
+      return "Finalizarea a fost refuzată. Înscrierea trebuie să fie activă și să nu aibă ședințe cu starea Programată.";
+    case "anulare_refuzata":
+      return "Anularea a fost refuzată. Înscrierea trebuie să fie activă și să nu aibă ședințe cu starea Programată.";
     case "server":
       return "Operația nu a putut fi finalizată din cauza unei erori.";
     default:
@@ -194,6 +204,12 @@ export default async function PaginaDetaliiInscriere({
 
   const actiuneRealocare =
     realocaInstructorInscriere.bind(null, id);
+
+  const actiuneFinalizare =
+    finalizeazaInscriere.bind(null, id);
+
+  const actiuneAnulare =
+    anuleazaInscriere.bind(null, id);
 
   return (
     <main className="flex flex-1 justify-center bg-zinc-50 px-4 py-8 text-zinc-950 sm:px-6 sm:py-12">
@@ -487,11 +503,45 @@ export default async function PaginaDetaliiInscriere({
           </div>
         )}
 
-        {inscriere.stare !== "activa" && (
+        {inscriere.stare === "activa" ? (
+          <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold">
+              Stare înscriere
+            </h2>
+
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-zinc-600">
+              Finalizarea și anularea sunt permise numai dacă înscrierea
+              este activă și nu există ședințe cu starea Programată.
+              Finalizarea completează automat data finalizării, iar
+              anularea păstrează data finalizării necompletată.
+            </p>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <form action={actiuneFinalizare}>
+                <button
+                  className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-600"
+                  type="submit"
+                >
+                  Finalizează înscrierea
+                </button>
+              </form>
+
+              <form action={actiuneAnulare}>
+                <button
+                  className="rounded-lg border border-red-300 bg-white px-5 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+                  type="submit"
+                >
+                  Anulează înscrierea
+                </button>
+              </form>
+            </div>
+          </section>
+        ) : (
           <div className="mt-6 rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-sm text-zinc-700">
             Înscrierea nu mai este activă.
-            Modificarea tarifului, observațiilor și
-            realocarea instructorului sunt blocate.
+            Modificarea tarifului, observațiilor,
+            realocarea instructorului și schimbarea
+            stării sunt blocate.
           </div>
         )}
 
@@ -518,11 +568,10 @@ export default async function PaginaDetaliiInscriere({
         </section>
 
         <p className="mt-5 text-sm text-zinc-500">
-          În Etapa 5F3 citirea, crearea,
-          modificarea și realocarea instructorului
-          sunt disponibile prin operații
-          controlate. Schimbarea stării înscrierii
-          va fi conectată separat.
+          În Etapa 5F4 citirea, crearea,
+          modificarea, realocarea instructorului,
+          finalizarea și anularea sunt disponibile
+          prin operații controlate.
         </p>
       </section>
     </main>

@@ -429,3 +429,114 @@ export async function realocaInstructorInscriere(
     `/cont/inscrieri/${idInscriere}?mesaj=instructor_realocat`,
   );
 }
+export async function finalizeazaInscriere(
+  idInscriere: string,
+) {
+  await cereAccesAdministrativ();
+
+  if (!FORMAT_UUID.test(idInscriere)) {
+    redirect("/cont/inscrieri");
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc(
+      "finalizeaza_inscriere",
+      {
+        p_id_inscriere: idInscriere,
+      },
+    );
+  } catch {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect("/cont/inscrieri");
+    }
+
+    if (rezultat.error.code === "PZ003") {
+      redirect(
+        `/cont/inscrieri/${idInscriere}?eroare=finalizare_refuzata`,
+      );
+    }
+
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  revalidatePath("/cont/inscrieri");
+  revalidatePath(
+    `/cont/inscrieri/${idInscriere}`,
+  );
+
+  redirect(
+    `/cont/inscrieri/${idInscriere}?mesaj=inscriere_finalizata`,
+  );
+}
+
+export async function anuleazaInscriere(
+  idInscriere: string,
+) {
+  await cereAccesAdministrativ();
+
+  if (!FORMAT_UUID.test(idInscriere)) {
+    redirect("/cont/inscrieri");
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc(
+      "anuleaza_inscriere",
+      {
+        p_id_inscriere: idInscriere,
+      },
+    );
+  } catch {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect("/cont/inscrieri");
+    }
+
+    if (rezultat.error.code === "PZ003") {
+      redirect(
+        `/cont/inscrieri/${idInscriere}?eroare=anulare_refuzata`,
+      );
+    }
+
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  revalidatePath("/cont/inscrieri");
+  revalidatePath(
+    `/cont/inscrieri/${idInscriere}`,
+  );
+
+  redirect(
+    `/cont/inscrieri/${idInscriere}?mesaj=inscriere_anulata`,
+  );
+}
