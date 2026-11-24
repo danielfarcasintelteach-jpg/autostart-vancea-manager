@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { verificaRoluriServer } from "@/lib/acces/autorizare";
 import { caleContPentruRol } from "@/lib/acces/roluri";
+import { citesteDetaliiInscriereAdministrativ } from "@/lib/date/inscrieri";
 import { creeazaClientServer } from "@/lib/supabase/server";
 
 const FORMAT_UUID =
@@ -212,5 +213,219 @@ export async function creeazaInscriere(
 
   redirect(
     `/cont/inscrieri/${idInscriere}?mesaj=inscriere_creata`,
+  );
+}
+export async function actualizeazaInscriere(
+  idInscriere: string,
+  formData: FormData,
+) {
+  await cereAccesAdministrativ();
+
+  if (!FORMAT_UUID.test(idInscriere)) {
+    redirect("/cont/inscrieri");
+  }
+
+  const tarifCurs = citesteTarif(formData);
+  const observatii = citesteTextOptional(
+    formData,
+    "observatii",
+    2000,
+  );
+
+  if (
+    tarifCurs === undefined ||
+    observatii === undefined
+  ) {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=date_invalide`,
+    );
+  }
+
+  let inscriere;
+
+  try {
+    inscriere =
+      await citesteDetaliiInscriereAdministrativ(
+        idInscriere,
+      );
+  } catch {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  if (!inscriere) {
+    redirect("/cont/inscrieri");
+  }
+
+  if (inscriere.stare !== "activa") {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=inscriere_inactiva`,
+    );
+  }
+
+  const modificari: {
+    tarif_curs?: number;
+    observatii?: string | null;
+  } = {};
+
+  if (
+    tarifCurs !== Number(inscriere.tarif_curs)
+  ) {
+    modificari.tarif_curs = tarifCurs;
+  }
+
+  if (
+    observatii !==
+    (inscriere.observatii ?? null)
+  ) {
+    modificari.observatii = observatii;
+  }
+
+  if (Object.keys(modificari).length === 0) {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?mesaj=fara_modificari`,
+    );
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc(
+      "modifica_inscriere",
+      {
+        p_id_inscriere: idInscriere,
+        p_modificari: modificari,
+      },
+    );
+  } catch {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect("/cont/inscrieri");
+    }
+
+    if (rezultat.error.code === "PZ003") {
+      redirect(
+        `/cont/inscrieri/${idInscriere}?eroare=modificare_refuzata`,
+      );
+    }
+
+    if (
+      rezultat.error.code === "22023" ||
+      rezultat.error.code === "23514" ||
+      rezultat.error.code === "22003" ||
+      rezultat.error.code === "22P02"
+    ) {
+      redirect(
+        `/cont/inscrieri/${idInscriere}?eroare=date_invalide`,
+      );
+    }
+
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  revalidatePath("/cont/inscrieri");
+  revalidatePath(
+    `/cont/inscrieri/${idInscriere}`,
+  );
+
+  redirect(
+    `/cont/inscrieri/${idInscriere}?mesaj=inscriere_actualizata`,
+  );
+}
+
+export async function realocaInstructorInscriere(
+  idInscriere: string,
+  formData: FormData,
+) {
+  await cereAccesAdministrativ();
+
+  if (!FORMAT_UUID.test(idInscriere)) {
+    redirect("/cont/inscrieri");
+  }
+
+  const idInstructorNou = citesteText(
+    formData,
+    "id_instructor_nou",
+  );
+
+  if (
+    !idInstructorNou ||
+    !FORMAT_UUID.test(idInstructorNou)
+  ) {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=instructor_invalid`,
+    );
+  }
+
+  const supabase = await creeazaClientServer();
+
+  let rezultat;
+
+  try {
+    rezultat = await supabase.rpc(
+      "realoca_instructor",
+      {
+        p_id_inscriere: idInscriere,
+        p_id_instructor_nou: idInstructorNou,
+      },
+    );
+  } catch {
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  if (rezultat.error) {
+    if (rezultat.error.code === "PZ001") {
+      redirect("/cont");
+    }
+
+    if (rezultat.error.code === "PZ002") {
+      redirect(
+        `/cont/inscrieri/${idInscriere}?eroare=resursa_inexistenta`,
+      );
+    }
+
+    if (rezultat.error.code === "PZ003") {
+      redirect(
+        `/cont/inscrieri/${idInscriere}?eroare=realocare_refuzata`,
+      );
+    }
+
+    if (
+      rezultat.error.code === "23514" ||
+      rezultat.error.code === "22P02"
+    ) {
+      redirect(
+        `/cont/inscrieri/${idInscriere}?eroare=instructor_invalid`,
+      );
+    }
+
+    redirect(
+      `/cont/inscrieri/${idInscriere}?eroare=server`,
+    );
+  }
+
+  revalidatePath("/cont/inscrieri");
+  revalidatePath(
+    `/cont/inscrieri/${idInscriere}`,
+  );
+
+  redirect(
+    `/cont/inscrieri/${idInscriere}?mesaj=instructor_realocat`,
   );
 }
