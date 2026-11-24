@@ -453,9 +453,10 @@ export default async function PaginaInscrieri({
         </div>
 
         <p className="mt-5 text-sm text-zinc-500">
-          În Etapa 5F2 citirea și crearea înscrierilor sunt
-          disponibile prin operații controlate. Modificarea
-          și schimbarea stării vor fi conectate separat.
+          În Etapa 5F5 modulul Înscrieri este complet:
+          citirea, crearea, modificarea, realocarea
+          instructorului și schimbarea stării sunt disponibile
+          prin operații controlate și protejate.
         </p>
       </section>
     </main>
