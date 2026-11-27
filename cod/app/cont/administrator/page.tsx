@@ -23,7 +23,7 @@ export default async function PaginaAdministrator() {
         { eticheta: "Instructori", href: "/cont/instructori" },
         { eticheta: "Vehicule", href: "/cont/vehicule" },
         { eticheta: "Înscrieri", href: "/cont/inscrieri" },
-        "Programări",
+        { eticheta: "Programări", href: "/cont/programari" },
         "Plăți și examene",
       ]}
       dateVizibile={dateVizibile}
